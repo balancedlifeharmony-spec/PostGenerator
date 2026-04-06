@@ -1,0 +1,882 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Victory Hour — Facebook Post Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0B1D3A;
+    --navy-light: #122849;
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dim: #8A6B28;
+    --cream: #F5F0E8;
+    --muted: #7A8A9A;
+    --success: #4CAF7D;
+    --error: #E05C5C;
+  }
+
+  body {
+    background: #070F1E;
+    color: var(--cream);
+    font-family: 'Barlow', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* SIDEBAR LAYOUT */
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--navy);
+    border-right: 1px solid rgba(201,168,76,0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .sidebar-brand {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .sidebar-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .sidebar-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--cream);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+  }
+
+  .sidebar-tagline {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .sidebar-nav {
+    padding: 16px 0;
+    flex: 1;
+  }
+
+  .nav-section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--gold-dim);
+    padding: 8px 24px 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 24px;
+    cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    background: none;
+    border-right: none;
+    border-top: none;
+    border-bottom: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover { color: var(--cream); background: rgba(201,168,76,0.05); }
+  .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(201,168,76,0.08); }
+
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    padding: 16px 24px;
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .mission-pill {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--gold);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 40px 48px;
+    max-width: 860px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header { margin-bottom: 32px; }
+
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    letter-spacing: 0.05em;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .page-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+
+  /* API KEY SECTION */
+  .api-section {
+    background: var(--navy);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+
+  .api-row { display: flex; gap: 10px; align-items: flex-end; }
+
+  .api-input-wrap { flex: 1; }
+
+  /* FIELD STYLES */
+  .field { margin-bottom: 20px; }
+
+  .field-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    color: var(--cream);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: rgba(201,168,76,0.5);
+  }
+
+  select option { background: #0B1D3A; color: #F5F0E8; }
+
+  textarea {
+    resize: none;
+    line-height: 1.65;
+    min-height: 140px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    padding: 11px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .btn-gold { background: var(--gold); color: var(--navy); font-weight: 600; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-gold:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.35);
+    color: var(--gold);
+  }
+  .btn-outline:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
+  .btn-outline:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--cream); }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* STATUS */
+  .status {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    min-height: 20px;
+    margin-bottom: 10px;
+  }
+  .status.ok { color: var(--success); }
+  .status.err { color: var(--error); }
+  .status.info { color: var(--gold); }
+
+  /* OUTPUT BOX */
+  .output-box {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.7;
+    min-height: 140px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 14px;
+    font-family: 'Barlow', sans-serif;
+  }
+
+  .output-box.placeholder { color: var(--muted); font-style: italic; }
+
+  /* QUEUE CARDS */
+  .queue-card {
+    background: var(--navy);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .queue-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+
+  .queue-day {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+
+  .queue-meta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .queue-text {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.6;
+  }
+
+  .queue-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+  .copied-flash {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    color: var(--success);
+    margin-top: 6px;
+    display: none;
+  }
+
+  /* STAT GRID */
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+
+  .stat-card {
+    background: var(--navy);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 12px;
+    padding: 18px 16px;
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* BRAND PILLS */
+  .brand-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+  .brand-pill {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--gold-dim);
+    margin-bottom: 12px;
+  }
+
+  .divider { height: 1px; background: rgba(201,168,76,0.1); margin: 24px 0; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.05em;
+    border: 1px dashed rgba(201,168,76,0.15);
+    border-radius: 12px;
+  }
+
+  .week-progress {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* CHALLENGE TRACKER */
+  .challenge-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .challenge-day {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .challenge-day.done {
+    background: rgba(201,168,76,0.15);
+    border-color: rgba(201,168,76,0.4);
+    color: var(--gold);
+  }
+  .challenge-day:hover { border-color: rgba(201,168,76,0.3); }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 200px; min-width: 200px; }
+    .main { margin-left: 200px; padding: 24px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">VICTORY HOUR MULTIMEDIA INC.</div>
+      <div class="sidebar-title">FACEBOOK POST MACHINE</div>
+      <div class="sidebar-tagline">CLARITY · STRATEGY · ACTION</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">TOOLS</div>
+      <button class="nav-item active" onclick="showPage('builder', this)">
+        <span class="nav-icon">✦</span> POST BUILDER
+      </button>
+      <button class="nav-item" onclick="showPage('queue', this)">
+        <span class="nav-icon">☰</span> WEEKLY QUEUE
+      </button>
+      <button class="nav-item" onclick="showPage('challenge', this)">
+        <span class="nav-icon">◎</span> 30-DAY CHALLENGE
+      </button>
+      <button class="nav-item" onclick="showPage('dashboard', this)">
+        <span class="nav-icon">▣</span> DASHBOARD
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="mission-pill">10% OF ALL PROCEEDS<br>FIGHTS WORLD HUNGER</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- POST BUILDER -->
+    <div class="page active" id="page-builder">
+      <div class="page-header">
+        <div class="page-title">POST BUILDER</div>
+        <div class="page-sub">Generate one perfect Facebook post in seconds</div>
+      </div>
+
+      <div class="api-section">
+        <div class="field-label">YOUR ANTHROPIC API KEY (saved locally, never shared)</div>
+        <div class="api-row">
+          <div class="api-input-wrap">
+            <input type="password" id="api-key" placeholder="sk-ant-..." />
+          </div>
+          <button class="btn btn-gold" onclick="saveKey()">SAVE KEY</button>
+        </div>
+        <div class="status" id="key-status"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label class="field-label">YOUR BRAND</label>
+          <select id="brand-select">
+            <option value="Victory Hour Multimedia — flagship brand for digital products, AI tools, books and multimedia. Tagline: Clarity. Strategy. Action.">Victory Hour Multimedia</option>
+            <option value="Niche Hunter AI — a $2.99 AI tool on Gumroad helping entrepreneurs find profitable niches fast.">Niche Hunter AI™</option>
+            <option value="Victory Hour Academy — a Skool community for digital product creators and entrepreneurs learning to build and sell online.">Victory Hour Academy™</option>
+            <option value="VictoryReception AI — a multilingual voicemail translation SaaS at victoryreception.com that translates voicemails in any language including Arabic.">VictoryReception AI™</option>
+            <option value="The Victory Hour Claude Vibe Guide — a book about using Claude AI to work smarter, build faster and create more as an entrepreneur.">Victory Hour Claude Vibe Guide™</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">POST TYPE</label>
+          <select id="post-type">
+            <option>Promotional offer</option>
+            <option>Tip / value post</option>
+            <option>Social proof / testimonial</option>
+            <option>Behind the scenes</option>
+            <option>Call to action</option>
+            <option>Mission post — 10% to fight world hunger</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">TONE</label>
+        <select id="tone">
+          <option value="">Confident and direct</option>
+          <option value="Make it urgent and punchy.">Urgent and punchy</option>
+          <option value="Make it warm and personal, like talking to a friend.">Warm and personal</option>
+          <option value="Make it bold and inspirational.">Bold and inspirational</option>
+          <option value="Open with a curiosity-driven hook question.">Curiosity hook</option>
+        </select>
+      </div>
+
+      <div class="status info" id="builder-status"></div>
+
+      <div class="output-box placeholder" id="post-output">Your post will appear here...</div>
+
+      <div class="btn-row">
+        <button class="btn btn-gold" id="gen-btn" onclick="generatePost()">GENERATE POST</button>
+        <button class="btn btn-outline" onclick="addToQueue()">ADD TO QUEUE</button>
+        <button class="btn btn-ghost" onclick="copyPost()">COPY</button>
+      </div>
+    </div>
+
+    <!-- WEEKLY QUEUE -->
+    <div class="page" id="page-queue">
+      <div class="page-header">
+        <div class="page-title">WEEKLY QUEUE</div>
+        <div class="page-sub">Generate a full week of posts — copy one per day at noon</div>
+      </div>
+
+      <div class="btn-row" style="margin-bottom: 20px;">
+        <button class="btn btn-gold" id="week-btn" onclick="generateWeek()">GENERATE FULL WEEK</button>
+        <button class="btn btn-ghost" onclick="clearQueue()">CLEAR QUEUE</button>
+      </div>
+
+      <div class="week-progress" id="week-progress"></div>
+      <div id="queue-list"><div class="empty-state">No posts queued yet.<br>Hit Generate Full Week or add posts from the builder.</div></div>
+    </div>
+
+    <!-- 30-DAY CHALLENGE -->
+    <div class="page" id="page-challenge">
+      <div class="page-header">
+        <div class="page-title">30-DAY CHALLENGE</div>
+        <div class="page-sub">Daily at noon — one post, ten engagements, one CTA</div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom: 24px;">
+        <div class="stat-card">
+          <div class="stat-num" id="c-done">0</div>
+          <div class="stat-label">DAYS DONE</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="c-left">30</div>
+          <div class="stat-label">DAYS LEFT</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="c-pct">0%</div>
+          <div class="stat-label">COMPLETE</div>
+        </div>
+      </div>
+
+      <div class="section-title">CLICK A DAY TO MARK IT DONE</div>
+      <div class="challenge-grid" id="challenge-grid"></div>
+
+      <div class="divider"></div>
+      <div class="section-title">FORMULA</div>
+      <div style="font-size:14px; color:var(--muted); line-height:1.8; font-family:'Barlow Condensed',sans-serif; letter-spacing:0.04em;">
+        ONE POST · TEN ENGAGEMENTS · ONE CTA · EVERY DAY AT NOON
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">DASHBOARD</div>
+        <div class="page-sub">Your Victory Hour publishing machine stats</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="s-gen">0</div><div class="stat-label">POSTS GENERATED</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-q">0</div><div class="stat-label">IN QUEUE</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-c">0</div><div class="stat-label">POSTS COPIED</div></div>
+        <div class="stat-card"><div class="stat-num" id="s-days">0</div><div class="stat-label">CHALLENGE DAYS</div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">YOUR BRANDS</div>
+      <div class="brand-grid">
+        <span class="brand-pill">Victory Hour Multimedia</span>
+        <span class="brand-pill">Niche Hunter AI™</span>
+        <span class="brand-pill">Victory Hour Academy™</span>
+        <span class="brand-pill">VictoryReception AI™</span>
+        <span class="brand-pill">Claude Vibe Guide™</span>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">MISSION</div>
+      <div style="font-size:14px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.05em;line-height:1.7;">
+        10% OF ALL PROCEEDS FROM EVERY VICTORY HOUR PRODUCT GOES TO FIGHTING WORLD HUNGER.<br>
+        EVERY POST YOU PUBLISH MOVES THE MISSION FORWARD.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let queue = [];
+let challengeDays = JSON.parse(localStorage.getItem('vh_challenge') || '[]');
+let stats = JSON.parse(localStorage.getItem('vh_stats') || '{"gen":0,"q":0,"c":0}');
+let currentPost = '';
+
+const DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+
+const WEEK_COMBOS = [
+  {brand:'Victory Hour Multimedia — flagship brand for digital products, AI tools, books. Tagline: Clarity. Strategy. Action.', label:'Victory Hour Multimedia', type:'Tip / value post', tone:''},
+  {brand:'Niche Hunter AI — a $2.99 AI tool on Gumroad helping entrepreneurs find profitable niches fast.', label:'Niche Hunter AI™', type:'Promotional offer', tone:'Make it urgent and punchy.'},
+  {brand:'Victory Hour Academy — a Skool community for digital product creators and entrepreneurs.', label:'Victory Hour Academy™', type:'Call to action', tone:''},
+  {brand:'VictoryReception AI — multilingual voicemail translation SaaS at victoryreception.com.', label:'VictoryReception AI™', type:'Social proof / testimonial', tone:'Make it warm and personal, like talking to a friend.'},
+  {brand:'The Victory Hour Claude Vibe Guide — a book about using Claude AI to build faster and work smarter.', label:'Claude Vibe Guide™', type:'Promotional offer', tone:'Open with a curiosity-driven hook question.'},
+  {brand:'Victory Hour Multimedia — flagship brand for digital products, AI tools, books. Tagline: Clarity. Strategy. Action.', label:'Victory Hour Multimedia', type:'Behind the scenes', tone:'Make it warm and personal, like talking to a friend.'},
+  {brand:'Victory Hour Multimedia — flagship brand for digital products, AI tools, books. Tagline: Clarity. Strategy. Action.', label:'Victory Hour Multimedia', type:'Mission post — 10% to fight world hunger', tone:'Make it bold and inspirational.'},
+];
+
+// ─── INIT ─────────────────────────────────────────────────
+window.onload = () => {
+  const savedKey = localStorage.getItem('vh_api_key');
+  if (savedKey) {
+    document.getElementById('api-key').value = savedKey;
+    setStatus('key-status', 'API key loaded from local storage.', 'ok');
+  }
+  renderChallenge();
+  updateDashboard();
+};
+
+// ─── NAV ──────────────────────────────────────────────────
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+// ─── API KEY ──────────────────────────────────────────────
+function saveKey() {
+  const key = document.getElementById('api-key').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    setStatus('key-status', 'Invalid key — must start with sk-ant-', 'err');
+    return;
+  }
+  localStorage.setItem('vh_api_key', key);
+  setStatus('key-status', 'Key saved to local storage.', 'ok');
+}
+
+function getKey() {
+  return localStorage.getItem('vh_api_key') || document.getElementById('api-key').value.trim();
+}
+
+// ─── STATUS ───────────────────────────────────────────────
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + (type || 'info');
+}
+
+// ─── PROMPT BUILDER ───────────────────────────────────────
+function buildPrompt(brand, type, tone) {
+  return `You are a Facebook post writer for Moe, founder of Victory Hour Multimedia Inc. in Windsor, Ontario, Canada.
+
+Brand context: ${brand}
+
+Write ONE Facebook post (3-5 sentences, no hashtags, no emojis) for post type: ${type}.
+
+Voice: confident, direct, mission-driven, entrepreneurial. Audience: digital product buyers, small business owners, AI-curious entrepreneurs.
+${type.includes('mission') ? '10% of all proceeds goes to fighting world hunger — make this the emotional core of the post.' : ''}
+${tone}
+
+Respond with ONLY the post text. No labels, no quotes, no preamble.`;
+}
+
+// ─── CLAUDE API CALL ──────────────────────────────────────
+async function callClaude(prompt) {
+  const key = getKey();
+  if (!key || !key.startsWith('sk-ant-')) throw new Error('No valid API key. Enter your key above.');
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 300,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'API error ' + response.status);
+  }
+
+  const data = await response.json();
+  return data.content[0].text.trim();
+}
+
+// ─── GENERATE SINGLE POST ─────────────────────────────────
+async function generatePost() {
+  const brand = document.getElementById('brand-select').value;
+  const type = document.getElementById('post-type').value;
+  const tone = document.getElementById('tone').value;
+  const out = document.getElementById('post-output');
+  const btn = document.getElementById('gen-btn');
+
+  btn.disabled = true;
+  setStatus('builder-status', 'Writing your post...', 'info');
+  out.className = 'output-box placeholder';
+  out.textContent = 'Writing...';
+
+  try {
+    const text = await callClaude(buildPrompt(brand, type, tone));
+    currentPost = text;
+    out.className = 'output-box';
+    out.textContent = text;
+    stats.gen++;
+    saveStats();
+    setStatus('builder-status', 'Post ready — add to queue or copy it.', 'ok');
+  } catch(e) {
+    out.textContent = '';
+    out.className = 'output-box placeholder';
+    setStatus('builder-status', e.message, 'err');
+  }
+
+  btn.disabled = false;
+}
+
+// ─── QUEUE ACTIONS ────────────────────────────────────────
+function addToQueue() {
+  if (!currentPost) return;
+  const el = document.getElementById('brand-select');
+  const label = el.options[el.selectedIndex].text;
+  const type = document.getElementById('post-type').value;
+  queue.push({ text: currentPost, brand: label, type, day: DAYS[queue.length % 7] });
+  stats.q = queue.length;
+  saveStats();
+  renderQueue();
+  setStatus('builder-status', 'Added to queue!', 'ok');
+}
+
+async function generateWeek() {
+  queue = [];
+  const btn = document.getElementById('week-btn');
+  const prog = document.getElementById('week-progress');
+  btn.disabled = true;
+  prog.style.display = 'block';
+
+  for (let i = 0; i < 7; i++) {
+    const c = WEEK_COMBOS[i];
+    prog.textContent = 'Writing ' + DAYS[i] + '... (' + (i + 1) + ' of 7)';
+    try {
+      const text = await callClaude(buildPrompt(c.brand, c.type, c.tone));
+      queue.push({ text, brand: c.label, type: c.type, day: DAYS[i] });
+    } catch(e) {
+      queue.push({ text: '[Error — regenerate this post]', brand: c.label, type: c.type, day: DAYS[i] });
+    }
+    renderQueue();
+  }
+
+  stats.q = queue.length;
+  saveStats();
+  prog.textContent = 'Full week ready — copy each post and schedule!';
+  btn.disabled = false;
+}
+
+function clearQueue() {
+  queue = [];
+  stats.q = 0;
+  saveStats();
+  document.getElementById('week-progress').style.display = 'none';
+  renderQueue();
+}
+
+function renderQueue() {
+  const el = document.getElementById('queue-list');
+  if (!queue.length) {
+    el.innerHTML = '<div class="empty-state">No posts queued yet.<br>Hit Generate Full Week or add posts from the builder.</div>';
+    return;
+  }
+  el.innerHTML = queue.map((p, i) => `
+    <div class="queue-card">
+      <div class="queue-card-header">
+        <div>
+          <div class="queue-day">${p.day}</div>
+          <div class="queue-meta">${p.brand} · ${p.type}</div>
+        </div>
+      </div>
+      <div class="queue-text">${p.text}</div>
+      <div class="queue-actions">
+        <button class="btn btn-outline" style="font-size:12px;padding:7px 16px;" onclick="copyQ(${i})">COPY POST</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px;" onclick="delQ(${i})">REMOVE</button>
+      </div>
+      <div class="copied-flash" id="fl-${i}">Copied to clipboard!</div>
+    </div>`).join('');
+}
+
+function copyQ(i) {
+  navigator.clipboard.writeText(queue[i].text).then(() => {
+    stats.c++;
+    saveStats();
+    const f = document.getElementById('fl-' + i);
+    f.style.display = 'block';
+    setTimeout(() => f.style.display = 'none', 1800);
+  });
+}
+
+function delQ(i) {
+  queue.splice(i, 1);
+  stats.q = queue.length;
+  saveStats();
+  renderQueue();
+}
+
+function copyPost() {
+  if (!currentPost) return;
+  navigator.clipboard.writeText(currentPost).then(() => {
+    stats.c++;
+    saveStats();
+    setStatus('builder-status', 'Copied to clipboard!', 'ok');
+  });
+}
+
+// ─── 30-DAY CHALLENGE ─────────────────────────────────────
+function renderChallenge() {
+  const grid = document.getElementById('challenge-grid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 30; i++) {
+    const done = challengeDays.includes(i);
+    const div = document.createElement('div');
+    div.className = 'challenge-day' + (done ? ' done' : '');
+    div.textContent = i;
+    div.onclick = () => toggleDay(i);
+    grid.appendChild(div);
+  }
+  const done = challengeDays.length;
+  document.getElementById('c-done').textContent = done;
+  document.getElementById('c-left').textContent = 30 - done;
+  document.getElementById('c-pct').textContent = Math.round((done / 30) * 100) + '%';
+  updateDashboard();
+}
+
+function toggleDay(n) {
+  const idx = challengeDays.indexOf(n);
+  if (idx > -1) challengeDays.splice(idx, 1);
+  else challengeDays.push(n);
+  localStorage.setItem('vh_challenge', JSON.stringify(challengeDays));
+  renderChallenge();
+}
+
+// ─── STATS ────────────────────────────────────────────────
+function saveStats() {
+  localStorage.setItem('vh_stats', JSON.stringify(stats));
+  updateDashboard();
+}
+
+function updateDashboard() {
+  document.getElementById('s-gen').textContent = stats.gen || 0;
+  document.getElementById('s-q').textContent = stats.q || 0;
+  document.getElementById('s-c').textContent = stats.c || 0;
+  document.getElementById('s-days').textContent = challengeDays.length;
+}
+</script>
+</body>
+</html>
